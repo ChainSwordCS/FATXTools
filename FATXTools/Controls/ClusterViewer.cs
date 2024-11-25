@@ -53,6 +53,7 @@ namespace FATXTools.Controls
 
         public void UpdateClusters()
         {
+            uint last_unoccupied_cluster = 0;
             for (uint i = 1; i < volume.MaxClusters; i++)
             {
                 var occupants = integrityAnalyzer.GetClusterOccupants(i);
@@ -61,8 +62,27 @@ namespace FATXTools.Controls
 
                 if (occupants == null || occupants.Count == 0)
                 {
-                    // No occupants
+                    if (i - 1 == last_unoccupied_cluster)
+                    {
+                        // middle of series of consecutive unoccupied clusters
+                        last_unoccupied_cluster = i;
+                    }
+                    else
+                    {
+                        // start of new series of consecutive unoccupied clusters
+                        Console.WriteLine("Unoccupied cluster(s) at "+i+" @ "+volume.ClusterToPhysicalOffset(i).ToString("X"));
+                        last_unoccupied_cluster = i;
+                    }
                     continue;
+                }
+                else
+                {
+                    if (i - 1 == last_unoccupied_cluster)
+                    {
+                        // end of series of consecutive unoccupied clusters
+                        Console.WriteLine("...");
+                        Console.WriteLine("Consecutive unoccupied clusters continue until cluster "+i+" @ "+volume.ClusterToPhysicalOffset(i).ToString("X"));
+                    }
                 }
 
                 if (occupants.Count > 1)
